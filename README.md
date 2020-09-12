@@ -114,7 +114,7 @@ d1
 
 変化のタイミングを設定
 
-- sometimes, sometimesBy, every など
+- sometimes, sometimesBy, every, whenmod など
 
 ```haskell
 d1
