@@ -2,13 +2,78 @@ AMCJ #007「実践！ライブコーディング」
 
 # 1. 環境設定など
 
-## プリ・コーディング vs. 完全ライブコーディング?
+## 完全ライブコーディング vs. プリ・コーディング
+
+- Alex McLeanさんは完全ライブコーディング
+    - [https://youtu.be/dIpzU71LAQQ](https://youtu.be/dIpzU71LAQQ)
+- Kindohmさんはあらかじめ書いたコードに書き足し?
+    - [https://youtu.be/smQOiFt8e4Q](https://youtu.be/smQOiFt8e4Q)
+
+どちらも一長一短。
+
+- 完全ライブコーディング
+    - 完全な即興から生まれるスリリングな状況の共有
+    - かなりの熟練が必要
+- プリ・コーディング
+    - 展開の素早さ、DJ的
+    - あまり作り込み過ぎると面白みがない
+
+今回のライブはかなりプリ・コーディング寄り
 
 ## TidalCyclesライブのための環境設定
 
+SuperColliderの起動ファイル
+
+startup.scd
+
+// OSCの送信 (oFとの連携用)
+var addr = NetAddr.new("127.0.0.1", 3333);
+OSCFunc({ |msg, time, tidalAddr|
+	var latency = time - Main.elapsedTime;
+	msg = msg ++ ["time", time, "latency", latency];
+	addr.sendBundle(latency, msg)
+}, '/play2').fix;
+
+// 初期設定してSuper-Dirtを起動
+s = Server.local;
+s.reboot {
+    // 初期設定
+	s.options.numBuffers = 1024 * 16;
+	s.options.memSize = 8192 * 16;
+	s.options.sampleRate = 48000;
+	s.volume = -6.0;
+	s.latency = 2.0;
+    // Super-Dirt起動
+	s.waitForBoot {
+		~dirt = SuperDirt(2, s);
+        // デフォルトのサンプルロード
+		~dirt.loadSoundFiles;
+        // 追加サンプルのロード
+		~dirt.loadSoundFiles("C:/Users/tado/AppData/Local/SuperCollider/downloaded-quarks/samples-extra/*");
+        // サーバーBoot待ち
+		s.sync;
+        // SuperDirtスタート
+		~dirt.start;
+	}
+}
+
+ポイント
+
+- OSCによるoFとの連携
+- SuperColliderが起動したらすぐにSuperDirtを起動するように
+- SuperDirtのデフォルトのサンプルを読み込んだ後で、自分で追加したオリジナルサンプル読み込み
+    - こちら! → [https://github.com/tado/samples-extra](https://github.com/tado/samples-extra)
+
+Windows 10のTips
+
+- 起動して最初のbootに時間がかかる場合
+- Windows Securityの例外にSC関連のプロセスを入れておく
+
 # 2. 基本編: 単純なパターンから進化させる
 
--- ノリ(グルーブ)の源泉、シンコペーション
+### ライブの際のコードを説明する前に、基本事項の確認
+
+ノリ(グルーブ)の源泉、シンコペーション
 
 d1 $s "bd hc bd cp" #cps(70/120) -- シンプルすぎる!
 
@@ -18,30 +83,33 @@ d1 $s "bd [~ hc] [~ bd] cp" -- さらにシンコペーション
 
 d1 $s "bd [~ hc] [~ bd] [~ [~ cp]]" -- やりすぎは良くない
 
--- ループ単位で変化させる
+### ループ単位で変化させる
 
 d1 $s "bd <~ hc [~ hc]> [~ bd] <cp cp*4 ~ [hc*2 ho]>" -- <>の中を順番に
 
--- 2つのパートの共存
+### 2つのパートの共存
 
 d1 $s "{bd hc [~ bd] cp, ho [~ ho] ho [~ ho*2]}"
 
--- パターンの上部でリズムに変化をつける
--- (jux, ~>, <~, brak, fast, slowなど)
+### パターンの上部でリズムに変化をつける
+### jux, ~>, <~, brak, fast, slowなど
+
 d1
   $jux (iter 8)
   $s "{bd hc [~ bd] cp, ho [~ ho] ho [~ ho*2]}"
 
--- 変化のタイミングを設定
--- (sometimes, sometimesBy, every など)
+### 変化のタイミングを設定
+### sometimes, sometimesBy, every など
+
 d1
   $sometimesBy 0.3 (jux (iter 8))
   $sometimes brak
   $every 4 (fast 2)
   $s "{bd hc [~ bd] cp, ho [~ ho] ho [~ ho*2]}"
 
--- パターンの下でエフェクトをつける
--- delay, room, shape, gainなど
+### パターンの下でエフェクトをつける
+### delay, room, shape, gainなど
+
 d1
   $every 6 (slow 2)
   $sometimesBy 0.3 (jux (iter 8))
@@ -51,7 +119,8 @@ d1
   #shape "0.5"
   #cps(70/120)
 
--- フィルター設定
+### フィルター設定
+
 d1
   $sometimesBy 0.3 (jux (iter 8))
   $every 4 (fast 2)
@@ -61,24 +130,27 @@ d1
   #resonance "0.2"
   #shape "0.7"
 
-## 変拍子、ポリリズム、ポリミーター
+### 変拍子、ポリリズム、ポリミーター
 
--- 変拍子 (4で割り切れないリズム)
+### 変拍子 (4で割り切れないリズム)
+
 d1 $s "bd hc bd cp cp" -- 5拍子
 
--- 変拍子 (4で割り切れないリズム)
 d1 $s "bd ~ hc bd cp ~ cp" -- 7拍子
 
--- 変拍子にリズム変化
+### 変拍子にリズム変化
+
 d1
   $sometimesBy 0.3 (rev)
   $jux (iter 14)
   $s "bd ~ hc bd cp ~ cp" -- 7拍子
 
--- ポリリズム、複数のリズムの共存  
+### ポリリズム、複数のリズムの共存
+
 d1 $s "[bd ~ hc bd cp ~ cp, bd hc bd ho]" -- 7 + 4拍子
 
--- ポリリズム + リズム変化
+### ポリリズム + リズム変化
+
 d1 
   $every 3 (rev)
   $sometimesBy 0.3 (jux (iter 14))
@@ -86,10 +158,12 @@ d1
   #lpf (range 100 10000 $slow 4 $sine)
   #resonance "0.2"
 
--- ポリミーター、複数のリズムのタイミングがずれていく
+### ポリミーター、複数のリズムのタイミングがずれていく
+
 d1 $s "{bd ~ hc*2 bd cp ~ cp*3, bd ~ hc cp}" -- 7 + 4拍子
 
--- ポリミーター + リズム変化
+### ポリミーター + リズム変化
+
 d1 
   $every 3 (rev)
   $sometimesBy 0.3 (jux (iter 14))
@@ -99,38 +173,41 @@ d1
   #shape "0.5"
   #cps(75/120)
 
--- ユークリッドリズム(便利!!)
+### ユークリッドリズム(便利!!)
 
 d1 $s "cp(3, 8)"
 
--- ユークリッドリズムの理屈
--- (3, 8)の場合
--- [1 1 1 0 0 0 0 0] (3, 8)
--- [1 0][1 0][1 0][0 0] 1と0をペアに
--- [1 0 0][1 0 0][1 0] 右に余った0を左から順に入れていく
--- [1 0 0 1 0 0 1 0] 完成
-
 d1 $s "cp(5, 8)"
--- (5, 8)の場合
--- [1 1 1 1 1 0 0 0]
--- [1 0][1 0][1 0][1 1] 1と0をペアに
--- [1 0 1][1 0 1][1 0] 余った1を配分
--- [1 0 1 1 0 1 1 0] 完成
 
--- 3つめのパラメータでシフト
+### ユークリッドリズムの理屈
+
+- (3, 8)の場合
+  - [1 1 1 0 0 0 0 0] (3, 8)
+  - [1 0][1 0][1 0][0 0] 1と0をペアに
+  - [1 0 0][1 0 0][1 0] 右に余った0を左から順に入れていく
+  - [1 0 0 1 0 0 1 0] 完成
+
+- (5, 8)の場合
+  - [1 1 1 1 1 0 0 0]
+  - [1 0][1 0][1 0][1 1] 1と0をペアに
+  - [1 0 1][1 0 1][1 0] 余った1を配分
+  - [1 0 1 1 0 1 1 0] 完成
+
+### 3つめのパラメータでシフト
+
 d1 $s "cp(5, 8, 1)"
 
 d1 $s "cp(5, 8, 2)"
 
 d1 $s "cp(5, 8, 3)"
 
--- 2つのユークリッドリズムを重ねることで複雑なリズムに
+### 2つのユークリッドリズムを重ねることで複雑なリズムに
 
 d1 $s "{cp(5, 8, 3), bd(3, 8, 0)}"
 
 d1 $s "{cp(9, 14, 5), bd(4, 14, 0)}" -- 7(14)拍子
 
--- stackで音を積む
+### stackで音を積む
 
 d1
   $stack
@@ -142,7 +219,8 @@ d1
   ]
   #cps(70/120)
 
--- stackの上でパターン変化、下にエフェクト
+### stackの上でパターン変化、下にエフェクト
+
 d1
   $every 4 (slow 2)
   $sometimesBy 0.7 (jux (iter 14))
@@ -159,7 +237,8 @@ d1
   #shape "0.5"
   #cps (70/120)
 
--- シンセの音でやっても面白い
+### シンセの音でやっても面白い
+
 d1
   $sometimesBy 0.7 (jux (iter 14))
   $sometimesBy 0.2 (rev)
@@ -178,12 +257,10 @@ d1
   #delay "0.5" #delayt "0.25" #delayfb "0.75"
   #cps (70/120)
 
-
-hush
-
 # 3. 応用編: 実際のコードをみながら
 
--- 全体の設定
+### 0. 全体の設定
+
 -- 7拍子、 75/120cps
 d1
   $ s "uni:1(1, 7)"
@@ -200,8 +277,7 @@ d1
   #gain "0.7"
   #n "[2.0, -1.5, 1.0]"
 
-
-## 1. 冒頭のパート
+### 1. 冒頭のパート
 
 -- コード(和音)
 do
@@ -231,11 +307,10 @@ d3
   # lpf (range 100 4000 $rand)
   # resonance "0.3"
 
--- minPent majPent ritusen egyptian kumai hirajoshi iwato chinese indian pelog prometheus scriabin gong shang jiao zhi yu whole augmented augmented2 hexMajor7 hexDorian hexPhrygian hexSus hexMajor6 hexAeolian major ionian dorian phrygian lydian mixolydian aeolian minor locrian harmonicMinor harmonicMajor melodicMinor melodicMinorDesc melodicMajor bartok hindu todi purvi marva bhairav ahirbhairav superLocrian romanianMinor hungarianMinor neapolitanMinor enigmatic spanish leadingWhole lydianMinor neapolitanMajor locrianMajor diminished diminished2 chromatic          
+-- minPent majPent ritusen egyptian kumai hirajoshi iwato chinese indian pelog prometheus scriabin gong shang jiao zhi yu whole augmented augmented2 hexMajor7 hexDorian hexPhrygian hexSus hexMajor6 hexAeolian major ionian dorian phrygian lydian mixolydian aeolian minor locrian harmonicMinor harmonicMajor melodicMinor melodicMinorDesc melodicMajor bartok hindu todi purvi marva bhairav ahirbhairav superLocrian romanianMinor hungarianMinor neapolitanMinor enigmatic spanish leadingWhole lydianMinor neapolitanMajor locrianMajor diminished diminished2 chromatic
 
-## 2. 最初のビート
+### 2. 最初のビート
 
---02
 d4
   $jux ((3/14) <~)
   $s "uni(5, 14)"
@@ -246,21 +321,18 @@ d5
   $s "uni(11, 14)" 
   #n "{2 3 1}%5"
   #gain "1.1" #shape "0.5"
-  
+
   #delay "0.6"
   #delayt (choose([0.005, 0.02, 0.01, 0.025])) 
   #delayfb "0.5"
   #orbit 1
 
-hush
+### 3. 最初の旋律
 
-## 最初の旋律
-
---03
 d1
   $sound "tet(9, 14, [0, 2])"
   #gain "1.0"
-  
+
   #sustain "0.1"
   #n "{0 .. 3}%9"
   #lpf (range 800 10000 $rand)  #resonance "0.3"
@@ -291,7 +363,8 @@ do
 
 hush
 
--- 2番目のビート
+### 4. 2番目のビート
+
 d1
   $slow 4
   $s "matsu"
@@ -320,10 +393,8 @@ d4
   |*|gain "1.0"
   -- #hpf 4000
 
-hush
+### 5. コードの盛り上り!!
 
--- コードの盛り上り!!
--- 07
 d5
   $jux (rev)
   $s "supersaw(14, 14)"
@@ -337,7 +408,8 @@ d5
   #gain "1.0"
   -- #semitone "{7 0 12 5 19 24}%13"
 
--- ソロにしてから激しいビートへ
+### 6. ソロにしてから激しいビートへ
+
 solo 5
 
 d2
@@ -386,7 +458,8 @@ d2
   #n (irand 64)
   #pan (rand)
 
--- 最後の盛り上がり!!
+### 7. 最後の盛り上がり!!
+
 do
   d5 silence
   d6 silence
@@ -462,8 +535,9 @@ d5
   -- #vowel "{a i u e o}%12"
   -- #room "0.2" #size "0.2"
 
-  -- フィナーレ!!
-  do
+### 9. フィナーレ!!
+
+do
   let chord = "d'sus4"
   d5
 	  $jux ((3/7)~>)
@@ -546,4 +620,4 @@ unsolo 5
 
 hush
 
-# おしまい！！
+おしまい！！
