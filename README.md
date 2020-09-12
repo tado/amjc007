@@ -27,35 +27,36 @@ SuperColliderの起動ファイル
 startup.scd
 
 ```c++
-// OSCの送信 (oFとの連携用)
+//TidalCyclesからのOSC送出(oFとの連携用)
 var addr = NetAddr.new("127.0.0.1", 3333);
 OSCFunc({ |msg, time, tidalAddr|
-	var latency = time - Main.elapsedTime;
-	msg = msg ++ ["time", time, "latency", latency];
-	addr.sendBundle(latency, msg)
+  var latency = time - Main.elapsedTime;
+  msg = msg ++ ["time", time, "latency", latency];
+  addr.sendBundle(latency, msg)
 }, '/play2').fix;
 
-// 初期設定してSuper-Dirtを起動
 s = Server.local;
+
 s.reboot {
-    // 初期設定
-	s.options.numBuffers = 1024 * 16;
-	s.options.memSize = 8192 * 16;
-	s.options.sampleRate = 48000;
-	s.volume = -6.0;
-	s.latency = 2.0;
-    // Super-Dirt起動
-	s.waitForBoot {
-		~dirt = SuperDirt(2, s);
-        // デフォルトのサンプルロード
-		~dirt.loadSoundFiles;
-        // 追加サンプルのロード
-		~dirt.loadSoundFiles("C:/Users/tado/AppData/Local/SuperCollider/downloaded-quarks/samples-extra/*");
-        // サーバーBoot待ち
-		s.sync;
-        // SuperDirtスタート
-		~dirt.start;
-	}
+  s.options.numBuffers = 1024 * 16; //バッファサイズ
+  s.options.memSize = 8192 * 16; //メモリサイズ
+  s.options.sampleRate = 48000; //サンプリングレイト
+  s.volume = -6.0; //音量
+  s.latency = 2.0; //レイテンシー
+  
+  //SuperDirtの初期設定
+  s.waitForBoot {
+    //チャンネル数の設定
+    ~dirt = SuperDirt(2, s);
+    //SuperDirt付属のサンプル読み込み
+    ~dirt.loadSoundFiles;
+    //独自サンプル読み込み
+    ~dirt.loadSoundFiles("C:/Users/tado/AppData/Local/SuperCollider/downloaded-quarks/samples-extra/*");
+    //bootするまで待機
+    s.sync;
+    //SuperDirt起動
+    ~dirt.start;
+  }
 }
 ```
 
