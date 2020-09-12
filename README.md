@@ -229,21 +229,27 @@ d1 $s "cp(5, 8)"
   - [1 0 1][1 0 1][1 0] 余った1を配分
   - [1 0 1 1 0 1 1 0] 完成
 
--- 3つめのパラメータでシフト
+3つめのパラメータでシフト
+
+```haskell
 d1 $s "cp(5, 8, 1)"
 
 d1 $s "cp(5, 8, 2)"
 
 d1 $s "cp(5, 8, 3)"
+```
 
--- 2つのユークリッドリズムを重ねることで複雑なリズムに
+2つのユークリッドリズムを重ねることで複雑なリズムに
 
+```haskell
 d1 $s "{cp(5, 8, 3), bd(3, 8, 0)}"
 
 d1 $s "{cp(9, 14, 5), bd(4, 14, 0)}" -- 7(14)拍子
+```
 
--- stackで音を積む
+stackで音を積む
 
+```haskell
 d1
   $stack
   [
@@ -253,8 +259,11 @@ d1
     s "bd(4, 14, 0)"
   ]
   #cps(70/120)
+```
 
--- stackの上でパターン変化、下にエフェクト
+stackの上でパターン変化、下にエフェクト
+
+```haskell
 d1
   $every 4 (slow 2)
   $sometimesBy 0.7 (jux (iter 14))
@@ -270,8 +279,11 @@ d1
   #resonance "0.3"
   #shape "0.5"
   #cps (70/120)
+```
 
--- シンセの音でやっても面白い
+シンセの音でやっても面白い
+
+```haskell
 d1
   $sometimesBy 0.7 (jux (iter 14))
   $sometimesBy 0.2 (rev)
@@ -289,13 +301,13 @@ d1
   #shape "0.5"
   #delay "0.5" #delayt "0.25" #delayfb "0.75"
   #cps (70/120)
-
-
-hush
+```
 
 # 3. 応用編: 実際のコードをみながら
 
--- 全体の設定
+### 0. 全体の設定
+
+```haskell
 -- 7拍子、 75/120cps
 d1
   $ s "uni:1(1, 7)"
@@ -311,10 +323,11 @@ d1
   $s "matsu"
   #gain "0.7"
   #n "[2.0, -1.5, 1.0]"
+```
 
+### 1. 冒頭のパート
 
-## 1. 冒頭のパート
-
+```haskell
 -- コード(和音)
 do
   let chord = "d'sus2"
@@ -343,11 +356,12 @@ d3
   # lpf (range 100 4000 $rand)
   # resonance "0.3"
 
--- minPent majPent ritusen egyptian kumai hirajoshi iwato chinese indian pelog prometheus scriabin gong shang jiao zhi yu whole augmented augmented2 hexMajor7 hexDorian hexPhrygian hexSus hexMajor6 hexAeolian major ionian dorian phrygian lydian mixolydian aeolian minor locrian harmonicMinor harmonicMajor melodicMinor melodicMinorDesc melodicMajor bartok hindu todi purvi marva bhairav ahirbhairav superLocrian romanianMinor hungarianMinor neapolitanMinor enigmatic spanish leadingWhole lydianMinor neapolitanMajor locrianMajor diminished diminished2 chromatic          
+-- minPent majPent ritusen egyptian kumai hirajoshi iwato chinese indian pelog prometheus scriabin gong shang jiao zhi yu whole augmented augmented2 hexMajor7 hexDorian hexPhrygian hexSus hexMajor6 hexAeolian major ionian dorian phrygian lydian mixolydian aeolian minor locrian harmonicMinor harmonicMajor melodicMinor melodicMinorDesc melodicMajor bartok hindu todi purvi marva bhairav ahirbhairav superLocrian romanianMinor hungarianMinor neapolitanMinor enigmatic spanish leadingWhole lydianMinor neapolitanMajor locrianMajor diminished diminished2 chromatic
+```
 
-## 2. 最初のビート
+### 2. 最初のビート
 
---02
+```haskell
 d4
   $jux ((3/14) <~)
   $s "uni(5, 14)"
@@ -363,12 +377,12 @@ d5
   #delayt (choose([0.005, 0.02, 0.01, 0.025])) 
   #delayfb "0.5"
   #orbit 1
+```
 
-hush
 
-## 最初の旋律
+### 3. 最初の旋律
 
---03
+```haskell
 d1
   $sound "tet(9, 14, [0, 2])"
   #gain "1.0"
@@ -402,8 +416,11 @@ do
     #resonance "0.2"
 
 hush
+```
 
--- 2番目のビート
+### 4. 2番目のビート
+
+```haskell
 d1
   $slow 4
   $s "matsu"
@@ -431,11 +448,12 @@ d4
   ]
   |*|gain "1.0"
   -- #hpf 4000
+```
 
-hush
 
--- コードの盛り上り!!
--- 07
+### 5. コードの盛り上り!!
+
+```haskell
 d5
   $jux (rev)
   $s "supersaw(14, 14)"
@@ -448,8 +466,11 @@ d5
   #resonance "0.2"
   #gain "1.0"
   -- #semitone "{7 0 12 5 19 24}%13"
+```
 
--- ソロにしてから激しいビートへ
+### 6. ソロにしてから激しいビートへ
+
+```haskell
 solo 5
 
 d2
@@ -497,8 +518,12 @@ d2
   #shape "0.9"
   #n (irand 64)
   #pan (rand)
+```  
 
--- 最後の盛り上がり!!
+
+### 7. 最後の盛り上がり!!
+
+```haskell
 do
   d5 silence
   d6 silence
@@ -573,9 +598,12 @@ d5
   #gain (range 0.0 2.5 $slow 24 $saw)
   -- #vowel "{a i u e o}%12"
   -- #room "0.2" #size "0.2"
+```
 
-  -- フィナーレ!!
-  do
+### 9. フィナーレ!!
+
+```haskell
+do
   let chord = "d'sus4"
   d5
 	  $jux ((3/7)~>)
@@ -657,5 +685,6 @@ d9 silence
 unsolo 5
 
 hush
+```
 
-# おしまい！！
+おしまい！！
