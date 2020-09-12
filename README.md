@@ -104,7 +104,7 @@ d1 $s "{bd hc [~ bd] cp, ho [~ ho] ho [~ ho*2]}"
 
 パターンの上部でリズムに変化をつける
 
-- jux, ~>, <~, brak, fast, slowなど
+- jux, brak, fast, slowなど
 
 ```haskell
 d1
